@@ -1,14 +1,13 @@
-from django.db import models as model_fields
-from django.conf.urls import url, include
-from django.contrib.auth import models as django_models
-from polymorphic import PolymorphicModel
-from cabot.cabotapp import models, alert
-from rest_framework import routers, serializers, viewsets, mixins
 import logging
+
+from cabot.cabotapp import models, alert
+from polymorphic.models import PolymorphicModel
+from rest_framework import routers, serializers, viewsets, mixins
 
 logger = logging.getLogger(__name__)
 
 router = routers.DefaultRouter()
+
 
 def create_viewset(arg_model, arg_fields, arg_read_only_fields=(), no_create=False):
     arg_read_only_fields = ('id',) + arg_read_only_fields
@@ -30,6 +29,7 @@ def create_viewset(arg_model, arg_fields, arg_read_only_fields=(), no_create=Fal
                               mixins.ListModelMixin,
                               viewsets.GenericViewSet):
             pass
+
         viewset_class = NoCreateViewSet
     else:
         viewset_class = viewsets.ModelViewSet
@@ -45,7 +45,9 @@ def create_viewset(arg_model, arg_fields, arg_read_only_fields=(), no_create=Fal
         serializer_class = Serializer
         ordering = ['id']
         filter_fields = arg_fields
+
     return ViewSet
+
 
 check_group_mixin_fields = (
     'name',
@@ -166,6 +168,6 @@ router.register(r'shifts', create_viewset(
 router.register(r'alertplugins', create_viewset(
     arg_model=alert.AlertPlugin,
     arg_fields=(
-            'title',
-        )
-    ))
+        'title',
+    )
+))

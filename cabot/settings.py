@@ -5,6 +5,14 @@ from django.conf import settings
 from cabot.celeryconfig import *
 from cabot.cabot_config import *
 
+# Make this unique, and don't share it with anybody.
+SECRET_KEY = os.environ.get(
+    'DJANGO_SECRET_KEY', '2FL6ORhHwr5eX34pP9mMugnIOd3jzVuT45f7w430Mt5PnEwbcJgma0q8zUXNZ68A')
+
+
+#import django
+#django.setup()
+
 settings_dir = os.path.dirname(__file__)
 PROJECT_ROOT = os.path.abspath(settings_dir)
 
@@ -18,8 +26,8 @@ MANAGERS = ADMINS
 
 DATABASES = {'default': dj_database_url.parse(os.environ["DATABASE_URL"])}
 
-if not DEBUG:
-    DATABASES['default']['OPTIONS'] = {'autocommit': True}
+# if not DEBUG:
+#     DATABASES['default']['OPTIONS'] = {'autocommit': True}
 
 USE_TZ = True
 
@@ -80,10 +88,6 @@ STATICFILES_FINDERS = (
     'compressor.finders.CompressorFinder',
 )
 
-# Make this unique, and don't share it with anybody.
-SECRET_KEY = os.environ.get(
-    'DJANGO_SECRET_KEY', '2FL6ORhHwr5eX34pP9mMugnIOd3jzVuT45f7w430Mt5PnEwbcJgma0q8zUXNZ68A')
-
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
     'django.template.loaders.filesystem.Loader',
@@ -105,8 +109,9 @@ TEMPLATE_DIRS = (
 )
 
 INSTALLED_APPS = (
-    'django.contrib.auth',
     'django.contrib.contenttypes',
+    'django.contrib.auth',
+
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.messages',
@@ -115,10 +120,9 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
     # 'django.contrib.admindocs',
-    'south',
+    #'south',
     'compressor',
     'polymorphic',
-    'djcelery',
     'jsonify',
     'cabot.cabotapp',
     'rest_framework',
@@ -176,7 +180,7 @@ LOGGING = {
     'handlers': {
         'null': {
             'level': 'DEBUG',
-            'class': 'django.utils.log.NullHandler',
+            'class': 'logging.NullHandler',
         },
         'console': {
             'level': 'DEBUG',

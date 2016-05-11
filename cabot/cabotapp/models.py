@@ -1,6 +1,7 @@
 import itertools
 import json
 import re
+
 import subprocess
 import time
 from datetime import timedelta
@@ -12,7 +13,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import models
 from django.utils import timezone
-from polymorphic import PolymorphicModel
+from polymorphic.models import PolymorphicModel
 
 from .alert import (
     send_alert,
@@ -485,11 +486,11 @@ class StatusCheck(PolymorphicModel):
     def recent_results(self):
         # Not great to use id but we are getting lockups, possibly because of something to do with index
         # on time_complete
-        return StatusCheckResult.objects.filter(check=self).order_by('-id').defer('raw_data')[:10]
+        return StatusCheckResult.objects.filter(status_check=self).order_by('-id').defer('raw_data')[:10]
 
     def last_result(self):
         try:
-            return StatusCheckResult.objects.filter(check=self).order_by('-id').defer('raw_data')[0]
+            return StatusCheckResult.objects.filter(status_check=self).order_by('-id').defer('raw_data')[0]
         except:
             return None
 
@@ -498,11 +499,11 @@ class StatusCheck(PolymorphicModel):
         try:
             result = self._run()
         except SoftTimeLimitExceeded as e:
-            result = StatusCheckResult(check=self)
+            result = StatusCheckResult(status_check=self)
             result.error = u'Error in performing check: Celery soft time limit exceeded'
             result.succeeded = False
         except Exception as e:
-            result = StatusCheckResult(check=self)
+            result = StatusCheckResult(status_check=self)
             logger.error(u"Error performing check: %s" % (e.message,))
             result.error = u'Error in performing check: %s' % (e.message,)
             result.succeeded = False
@@ -570,7 +571,7 @@ class ICMPStatusCheck(StatusCheck):
         return "ICMP/Ping Check"
 
     def _run(self):
-        result = StatusCheckResult(check=self)
+        result = StatusCheckResult(status_check=self)
         instances = self.instance_set.all()
         target = self.instance_set.get().address
 
@@ -634,7 +635,7 @@ class GraphiteStatusCheck(StatusCheck):
             return "%s %s %0.1f" % (value, self.check_type, float(self.value))
 
     def _run(self):
-        result = StatusCheckResult(check=self)
+        result = StatusCheckResult(status_check=self)
 
         failures = []
         graphite_output = parse_metric(self.metric, mins_to_check=self.frequency)
@@ -707,7 +708,7 @@ class HttpStatusCheck(StatusCheck):
         return "HTTP check"
 
     def _run(self):
-        result = StatusCheckResult(check=self)
+        result = StatusCheckResult(status_check=self)
 
         auth = None
         if self.username or self.password:
@@ -757,7 +758,7 @@ class JenkinsStatusCheck(StatusCheck):
         return 'Job failing on Jenkins'
 
     def _run(self):
-        result = StatusCheckResult(check=self)
+        result = StatusCheckResult(status_check=self)
         try:
             status = get_job_status(self.name)
             active = status['active']
@@ -811,7 +812,7 @@ class StatusCheckResult(models.Model):
     Checks don't have to use all the fields, so most should be
     nullable
     """
-    check = models.ForeignKey(StatusCheck)
+    status_check = models.ForeignKey(StatusCheck)
     time = models.DateTimeField(null=False, db_index=True)
     time_complete = models.DateTimeField(null=True, db_index=True)
     raw_data = models.TextField(null=True)
@@ -823,7 +824,7 @@ class StatusCheckResult(models.Model):
 
     class Meta:
         ordering = ['-time_complete']
-        index_together = (('check', 'time_complete'),)
+        index_together = (('status_check', 'time_complete'),)
 
     def __unicode__(self):
         return '%s: %s @%s' % (self.status, self.check.name, self.time)
